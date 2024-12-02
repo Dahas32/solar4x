@@ -65,8 +65,9 @@ impl Plugin for GuiPlugin {
                 Update,
                 (
                     zoom_with_scroll.run_if(
-                        on_event::<MouseWheel>().and_then(not(input_pressed(KeyCode::ShiftLeft)
-                            .or_else(input_pressed(KeyCode::ControlLeft)))),
+                        on_event::<MouseWheel>()
+                            .and_then(not(input_pressed(KeyCode::ShiftLeft)))
+                            .and_then(not(input_pressed(KeyCode::ControlLeft))),
                     ),
                     (adaptive_scale, adaptive_translation)
                         .after(zoom_with_scroll)

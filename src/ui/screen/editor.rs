@@ -1,6 +1,10 @@
 use std::collections::BTreeMap;
 
-use bevy::{math::DVec3, prelude::*};
+use bevy::{
+    ecs::component::TickCells,
+    math::{u64, DVec3},
+    prelude::*,
+};
 use bevy_ratatui::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use ratatui::{
@@ -156,6 +160,10 @@ impl EditorContext {
             .remove(&tick)
             .map(|val| self.nodes.insert(newtick, val));
     }
+
+    pub fn remove_node(&mut self, tick: u64) {
+        self.nodes.remove(&tick);
+    }
 }
 impl ClampedList for EditorContext {
     fn list_state(&mut self) -> &mut ListState {
@@ -230,6 +238,7 @@ fn read_input(
             e if keymap.select_next.matches(e) => SelectAdjacent(Down),
             e if keymap.select_previous.matches(e) => SelectAdjacent(Up),
             e if keymap.back.matches(e) => return next_screen.set(AppScreen::Fleet),
+            e if keymap.remove_node.matches(e) => RemoveNode(true),
             // e if keymap.new_node.matches(e) => NewNode(None),
             _ => return,
         });
@@ -240,6 +249,7 @@ fn read_input(
 pub enum SelectNode {
     SelectAdjacent(Direction2),
     SelectNearestOrInsert(u64),
+    RemoveNode(bool),
 }
 
 fn handle_editor_events(
@@ -264,6 +274,15 @@ fn handle_editor_events(
                         origin,
                     },
                 );
+            }
+            SelectNode::RemoveNode(b) => {
+                if b {
+                    let cur_tick = match context.selected_tick() {
+                        None => continue,
+                        Some(i) => i,
+                    };
+                    context.remove_node(cur_tick);
+                }
             }
         }
     }

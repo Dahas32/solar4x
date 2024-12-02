@@ -48,11 +48,14 @@ pub struct BodiesPlugin;
 
 impl Plugin for BodiesPlugin {
     fn build(&self, app: &mut App) {
+        info!("loading BodiesPlugin");
+        info!("adding system OnEnter(Loaded) : build_system.in_set(ObjectsUpdate)");
         app.add_systems(OnEnter(Loaded), build_system.in_set(ObjectsUpdate));
     }
 }
 
 pub fn build_system(mut commands: Commands, config: Res<BodiesConfig>) {
+    info!("building system");
     let bodies: Vec<_> = read_main_bodies()
         .expect("Failed to read bodies")
         .into_iter()

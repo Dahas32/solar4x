@@ -41,13 +41,16 @@ pub struct PhysicsPlugin;
 
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
+        info!("loading PhysicsPlugin");
+        info!("adding plugins : orbit::plugin , inflence::plugin, leapfrog::plugin, time::plugin");
         app.add_plugins((
             orbit::plugin,
             influence::plugin,
             leapfrog::plugin,
             time::plugin,
-        ))
-        .configure_sets(
+        ));
+        info!("configuring sets : (TimeUpdate,OrbitsUpdate,InfluenceUpdate,TrajectoryUpdate,LeapfrogUpdate,).chain().in_set(PhysicsUpdate).run_if(resource_equals(ToggleTime(true)))");
+        app.configure_sets(
             FixedUpdate,
             (
                 TimeUpdate,

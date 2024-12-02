@@ -15,13 +15,18 @@ use crate::{
 use super::time::GameTime;
 
 pub fn plugin(app: &mut App) {
+    info!("loading orbit::plugin");
+    info!("adding system OnEnter(Loaded) : (update_local, update_global, insert_system_size).chain().in_set(OrbitsUpdate),");
     app.add_systems(
         OnEnter(Loaded),
         (update_local, update_global, insert_system_size)
             .chain()
             .in_set(OrbitsUpdate),
-    )
-    .add_systems(
+    );
+    info!(
+        "adding system FixedUpdate : (update_local, update_global).chain().in_set(OrbitsUpdate),"
+    );
+    app.add_systems(
         FixedUpdate,
         (update_local, update_global).chain().in_set(OrbitsUpdate),
     );
@@ -56,6 +61,7 @@ const E_TOLERANCE: f64 = 1e-6;
 #[allow(non_snake_case)]
 impl EllipticalOrbit {
     fn update_M(&mut self, time: f64) {
+        debug!("update_M");
         if self.revolution_period == 0. {
             return;
         }
@@ -63,6 +69,7 @@ impl EllipticalOrbit {
             mod_180(self.initial_mean_anomaly + 360. * time / self.revolution_period);
     }
     fn update_E(&mut self, time: f64) {
+        debug!("update_E");
         self.update_M(time);
         let M = self.mean_anomaly;
         let e = self.eccentricity;
@@ -82,6 +89,7 @@ impl EllipticalOrbit {
         self.eccentric_anomaly = E;
     }
     fn update_orb_pos(&mut self, time: f64) {
+        debug!("update_orb_pos");
         self.update_E(time);
         let a = self.semimajor_axis;
         let E = self.eccentric_anomaly.to_radians();
@@ -100,6 +108,7 @@ impl EllipticalOrbit {
     }
 
     pub fn update_pos(&mut self, time: f64) {
+        debug!("update_pos");
         self.update_orb_pos(time);
         let o = self.arg_periapsis.to_radians();
         let O = self.long_asc_node.to_radians();
@@ -111,6 +120,7 @@ impl EllipticalOrbit {
 
 impl From<&BodyData> for EllipticalOrbit {
     fn from(data: &BodyData) -> Self {
+        debug!("making EllipticalOrbit from BodyData");
         Self {
             eccentricity: data.eccentricity,
             semimajor_axis: data.semimajor_axis,
@@ -126,6 +136,7 @@ impl From<&BodyData> for EllipticalOrbit {
 }
 
 pub fn update_local(mut orbits: Query<&mut EllipticalOrbit>, time: Res<GameTime>) {
+    debug!("update_local");
     orbits
         .par_iter_mut()
         .for_each(|mut o| o.update_pos(time.time()));
@@ -136,6 +147,7 @@ pub fn update_global(
     primary: Query<&BodyInfo, With<PrimaryBody>>,
     mapping: Res<BodiesMapping>,
 ) {
+    debug!("update_global");
     let mut queue = vec![(primary.single().0.id, (DVec3::ZERO, DVec3::ZERO))];
     let mut i = 0;
     while i < queue.len() {
@@ -157,6 +169,7 @@ pub fn update_global(
 pub struct SystemSize(pub f64);
 
 pub fn insert_system_size(mut commands: Commands, body_positions: Query<&Position>) {
+    debug!("insert_system_size");
     let system_size = body_positions
         .iter()
         .map(|pos| pos.0.length())

@@ -14,17 +14,29 @@ pub const GAMETIME_PER_SIMTICK: f64 = 1e-3;
 pub const SIMTICKS_PER_TICK: u64 = 10;
 
 pub fn plugin(app: &mut App) {
-    app.insert_resource(Time::<Fixed>::from_hz(STPS))
-        .init_resource::<ToggleTime>()
-        .init_resource::<GameTime>()
-        .init_resource::<SimStepSize>()
-        .add_event::<TimeEvent>()
-        .add_event::<TickEvent>()
-        .add_systems(
-            FixedUpdate,
-            (update_simtick, update_tick).in_set(TimeUpdate),
-        )
-        .add_systems(Update, handle_time_events);
+    info!("loading time::plugin");
+    info!("inserting resource time");
+    app.insert_resource(Time::<Fixed>::from_hz(STPS));
+    info!("initialising resource ToggleTime");
+    app.init_resource::<ToggleTime>();
+    info!("initialising resource GameTime");
+    app.init_resource::<GameTime>();
+    info!("initialising resource SimStepSize");
+    app.init_resource::<SimStepSize>();
+    info!("adding event TimeEvent");
+    app.add_event::<TimeEvent>();
+    info!("adding event TickEvent");
+    app.add_event::<TickEvent>();
+    info!(
+        "adding systems FixedUpdate : (update_simtick, update_tick).in_set(TimeUpdate),
+"
+    );
+    app.add_systems(
+        FixedUpdate,
+        (update_simtick, update_tick).in_set(TimeUpdate),
+    );
+    info!("adding systems update : handle_time_events");
+    app.add_systems(Update, handle_time_events);
 }
 
 #[derive(SystemSet, Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -41,10 +53,12 @@ pub struct GameTime {
 
 impl GameTime {
     pub fn time(&self) -> f64 {
+        debug!("time");
         self.simtick as f64 * GAMETIME_PER_SIMTICK
     }
 
     pub fn tick(&self) -> u64 {
+        debug!("tick");
         self.simtick / SIMTICKS_PER_TICK
     }
 }
@@ -55,6 +69,7 @@ pub struct SimStepSize(pub u64);
 
 impl Default for SimStepSize {
     fn default() -> Self {
+        debug!("SimStepSize::default");
         Self(1)
     }
 }
@@ -76,12 +91,14 @@ pub enum TimeEvent {
 }
 
 fn update_tick(mut writer: EventWriter<TickEvent>, game_time: Res<GameTime>) {
+    debug!("update_tick");
     if game_time.simtick % SIMTICKS_PER_TICK == 0 {
         writer.send_default();
     }
 }
 
 fn update_simtick(mut game_time: ResMut<GameTime>, step: Res<SimStepSize>) {
+    debug!("update_simtick");
     game_time.simtick += step.0;
 }
 
@@ -91,6 +108,7 @@ fn handle_time_events(
     mut time: ResMut<Time<Virtual>>,
     mut step_size: ResMut<SimStepSize>,
 ) {
+    debug!("handle_time_events");
     use TimeEvent::*;
     for event in reader.read() {
         match event {

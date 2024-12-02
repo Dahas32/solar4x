@@ -14,8 +14,8 @@ use bevy::{math::DVec3, prelude::*};
 
 use super::{ClearOnEditorExit, EditorContext};
 
-pub const PREDICTIONS_NUMBER: usize = 10_000;
-const PREDICTION_DELAY: Duration = Duration::from_millis(100);
+pub const PREDICTIONS_NUMBER: usize = 250_000;
+const PREDICTION_DELAY: Duration = Duration::from_millis(200);
 const PREDICTIONS_ADD_STEP: isize = 100;
 const TICK_ADD_STEP: isize = 1;
 

@@ -50,6 +50,7 @@ pub struct EditorKeymap {
     pub select_next: Key,
     pub select_previous: Key,
     pub back: Key,
+    pub remove_node: Key,
     pub new_node: Key,
 }
 
@@ -182,6 +183,7 @@ impl Default for EditorKeymap {
             select_previous: Key::from_str_unchecked("up"),
             back: Key::from_str_unchecked("esc"),
             new_node: Key::from_str_unchecked("n"),
+            remove_node: Key::from_str_unchecked("backspace"),
         }
     }
 }

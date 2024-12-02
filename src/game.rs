@@ -1,11 +1,13 @@
+use bevy::log::LogPlugin;
+use bevy::{prelude::*, state::app::StatesPlugin};
 use std::{
     fs::create_dir_all,
     path::{Path, PathBuf},
 };
 
-use bevy::{prelude::*, state::app::StatesPlugin};
 use tempfile::{tempdir, TempDir};
 
+use crate::ui::widget::info;
 use crate::{
     client::ClientMode,
     objects::{
@@ -41,6 +43,7 @@ impl GamePlugin {
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
+        info!("loading GamePlugin");
         let path = if self.testing {
             let dir = TempDirectory::default();
             let path = dir.0.path().to_owned();
@@ -50,25 +53,44 @@ impl Plugin for GamePlugin {
             GAME_FILES_PATH.into()
         };
         if self.testing {
-            app.add_plugins((MinimalPlugins, StatesPlugin))
+            app.add_plugins((MinimalPlugins, StatesPlugin));
         } else {
-            app.add_plugins(DefaultPlugins)
+            app.add_plugins(DefaultPlugins.set(LogPlugin {
+                level: bevy::log::Level::DEBUG,
+                filter: "debug,wgpu_core=warn,wgpu_hal=warn,mygame=debug".into(),
+                ..Default::default()
+            }));
         }
-        .add_plugins((PhysicsPlugin, BodiesPlugin, ShipsPlugin))
-        .add_computed_state::<InGame>()
-        .add_computed_state::<Authoritative>()
-        .add_sub_state::<GameStage>()
-        .add_computed_state::<Loaded>()
-        .insert_resource(GameFiles::new(path).unwrap())
-        .configure_sets(
+        info!("loading PhysicsPlugin,BodiesPlugin,ShipsPlugin");
+        app.add_plugins((PhysicsPlugin, BodiesPlugin, ShipsPlugin));
+
+        info!("adding InGame state");
+        app.add_computed_state::<InGame>();
+        info!("adding Authoritative state");
+        app.add_computed_state::<Authoritative>();
+        info!("adding sub state GameStage");
+        app.add_sub_state::<GameStage>();
+        info!("adding computed_state Loaded");
+        app.add_computed_state::<Loaded>();
+        info!("inserting resource GameFiles::new(path).unwrap()");
+        app.insert_resource(GameFiles::new(path).unwrap());
+        info!(
+            "configuring states (ObjectsUpdate, OrbitsUpdate, InfluenceUpdate, GUIUpdate).chain()"
+        );
+        app.configure_sets(
             OnEnter(Loaded),
             (ObjectsUpdate, OrbitsUpdate, InfluenceUpdate, GUIUpdate).chain(),
-        )
-        .configure_sets(Update, ObjectsUpdate.run_if(in_state(Loaded)))
-        .configure_sets(FixedUpdate, PhysicsUpdate.run_if(in_state(Loaded)))
-        .add_systems(OnExit(Loaded), clear_loaded)
-        .add_systems(OnEnter(GameStage::Action), enable_time)
-        .add_systems(OnEnter(GameStage::Preparation), disable_time);
+        );
+        info!("configuring states ObjectsUpdate.run_if(in_state(Loaded))");
+        app.configure_sets(Update, ObjectsUpdate.run_if(in_state(Loaded)));
+        info!("configuring states PhysicsUpdate.run_if(in_state(Loaded))");
+        app.configure_sets(FixedUpdate, PhysicsUpdate.run_if(in_state(Loaded)));
+        info!("adding system clear_loaded");
+        app.add_systems(OnExit(Loaded), clear_loaded);
+        info!("adding system enable_time");
+        app.add_systems(OnEnter(GameStage::Action), enable_time);
+        info!("adding system disable_time");
+        app.add_systems(OnEnter(GameStage::Preparation), disable_time);
     }
 }
 
@@ -77,6 +99,7 @@ pub struct TempDirectory(pub TempDir);
 
 impl Default for TempDirectory {
     fn default() -> Self {
+        debug!("TempDirectory::default");
         Self(tempdir().unwrap())
     }
 }
@@ -89,6 +112,7 @@ pub struct GameFiles {
 
 impl GameFiles {
     pub fn new(path: impl AsRef<Path>) -> Result<Self, std::io::Error> {
+        info!("creating GameFiles");
         let root: PathBuf = path.as_ref().into();
         let trajectories = root.join(TRAJECTORIES_PATH);
         create_dir_all(trajectories)?;
@@ -107,6 +131,7 @@ impl ComputedStates for InGame {
     type SourceStates = (Option<ClientMode>, Loaded);
 
     fn compute(sources: Self::SourceStates) -> Option<Self> {
+        info!("computing state InGame");
         if !matches!(sources.1, Loaded) {
             None
         } else {
@@ -149,6 +174,7 @@ impl ComputedStates for Loaded {
     type SourceStates = ClientMode;
 
     fn compute(sources: Self::SourceStates) -> Option<Self> {
+        info!("computing state : Loaded");
         match sources {
             ClientMode::None => None,
             _ => Some(Loaded),
@@ -168,6 +194,7 @@ impl ComputedStates for Authoritative {
     type SourceStates = Option<ClientMode>;
 
     fn compute(sources: Self::SourceStates) -> Option<Self> {
+        info!("compiting state : Authoritative");
         match sources {
             Some(ClientMode::Singleplayer) | None => Some(Self),
             _ => None,
@@ -176,6 +203,7 @@ impl ComputedStates for Authoritative {
 }
 
 fn clear_loaded(mut commands: Commands, query: Query<Entity, With<ClearOnUnload>>) {
+    info!("executing clear_loaded");
     for e in query.iter() {
         commands.entity(e).despawn();
     }
@@ -184,9 +212,11 @@ fn clear_loaded(mut commands: Commands, query: Query<Entity, With<ClearOnUnload>
 }
 
 fn enable_time(mut toggle: ResMut<ToggleTime>) {
+    info!("Enabling time");
     toggle.0 = true;
 }
 fn disable_time(mut toggle: ResMut<ToggleTime>) {
+    info!("disabling time");
     toggle.0 = false;
 }
 

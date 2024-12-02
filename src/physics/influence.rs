@@ -9,13 +9,18 @@ use super::time::TickEvent;
 use super::Position;
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Loaded), setup_hill_spheres.in_set(InfluenceUpdate))
-        .add_systems(
-            FixedUpdate,
-            update_influence
-                .in_set(InfluenceUpdate)
-                .run_if(on_event::<TickEvent>()),
-        );
+    info!("loading inflence::plugin");
+    info!("adding system OnEnter(loaded) : setup_jill_spheres.in_set(InfluenceUpdate)");
+    app.add_systems(OnEnter(Loaded), setup_hill_spheres.in_set(InfluenceUpdate));
+    info!(
+        "adding system FixedUpdate : update_influence.in_set(InfluenceUpdate).run_if(on_event::<TickEvent>()),"
+    );
+    app.add_systems(
+        FixedUpdate,
+        update_influence
+            .in_set(InfluenceUpdate)
+            .run_if(on_event::<TickEvent>()),
+    );
 }
 
 #[derive(SystemSet, Debug, PartialEq, Eq, Hash, Clone)]
@@ -38,6 +43,7 @@ impl Influenced {
         mapping: &BodiesMapping,
         main_body: BodyID,
     ) -> Self {
+        debug!("new Influenced");
         // if an object is not in a bodie's sphere of influence, it is not in its children's either
         fn influencers_rec(
             body: BodyID,
@@ -46,6 +52,7 @@ impl Influenced {
             object_pos: &DVec3,
             influences: &mut Vec<(Entity, f64)>,
         ) {
+            debug!("influencers_rec");
             if let Some(e) = mapping.0.get(&body) {
                 let (Position(body_pos), HillRadius(hill_radius), BodyInfo(data)) =
                     query.get(*e).unwrap();
@@ -78,6 +85,7 @@ fn setup_hill_spheres(
     primary: Query<(Entity, &BodyInfo), With<PrimaryBody>>,
     mapping: Res<BodiesMapping>,
 ) {
+    debug!("setting up hill spheres");
     let mut queue = vec![(primary.single().1 .0.id, 0.)];
     let mut i = 0;
     while i < queue.len() {
@@ -105,6 +113,7 @@ fn update_influence(
     mapping: Res<BodiesMapping>,
     main_body: Query<&BodyInfo, With<PrimaryBody>>,
 ) {
+    debug!("updating influence");
     let main_body = main_body.single().0.id;
     influenced
         .par_iter_mut()

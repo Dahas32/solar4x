@@ -8,7 +8,6 @@ use bevy_quinnet::{
     },
     shared::ClientId,
 };
-
 pub mod prelude {
     pub use super::{ServerNetworkInfo, ServerPlugin};
 }

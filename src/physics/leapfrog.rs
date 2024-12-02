@@ -9,13 +9,16 @@ use crate::game::InGame;
 
 // See https://en.wikipedia.org/wiki/Leapfrog_integration#Algorithm
 pub fn plugin(app: &mut App) {
+    info!("loading leapfrog::plugin");
+    info!("configuring sets FixedUpdate : LeapfrogUpdate.run_if(resource_equals(ToggleTime(true))).run_if(in_state(InGame)),");
     app.configure_sets(
         FixedUpdate,
         LeapfrogUpdate
             .run_if(resource_equals(ToggleTime(true)))
             .run_if(in_state(InGame)),
-    )
-    .add_systems(
+    );
+    info!("adding systems FixedUpdate :  (update_position, update_acceleration, update_velocity).chain().in_set(LeapfrogUpdate),");
+    app.add_systems(
         FixedUpdate,
         (update_position, update_acceleration, update_velocity)
             .chain()
@@ -34,6 +37,7 @@ pub struct Acceleration {
 
 impl Acceleration {
     pub fn new(acc: DVec3) -> Self {
+        debug!("new_acceleration");
         Self {
             current: acc,
             ..Default::default()
@@ -45,6 +49,7 @@ fn update_acceleration(
     mut gravity_bound: Query<(&Position, &mut Acceleration, &Influenced)>,
     bodies: Query<(&Position, &Mass)>,
 ) {
+    debug!("updating accelaration");
     gravity_bound
         .par_iter_mut()
         .for_each(|(object_pos, mut acceleration, influenced)| {
@@ -62,12 +67,14 @@ fn update_position(
     mut query: Query<(&mut Position, &Velocity, &Acceleration)>,
     step: Res<SimStepSize>,
 ) {
+    debug!("updating position");
     query.par_iter_mut().for_each(|(mut pos, speed, acc)| {
         pos.0 += get_dx(speed.0, acc.current, GAMETIME_PER_SIMTICK * step.0 as f64)
     });
 }
 
 fn update_velocity(mut query: Query<(&mut Velocity, &Acceleration)>, step: Res<SimStepSize>) {
+    debug!("updating velocity");
     query.par_iter_mut().for_each(|(mut speed, acc)| {
         speed.0 += get_dv(
             acc.previous,
@@ -82,6 +89,7 @@ pub fn get_acceleration(
     object_pos: DVec3,
     influencers: impl Iterator<Item = (DVec3, f64)>,
 ) -> DVec3 {
+    debug!("getting acceleration");
     let mut acc = DVec3::ZERO;
     for (body_pos, mass) in influencers {
         let r = object_pos - body_pos;
@@ -92,10 +100,12 @@ pub fn get_acceleration(
 }
 
 pub fn get_dx(speed: DVec3, acc: DVec3, dt: f64) -> DVec3 {
+    info!("getting dx");
     (speed + acc * dt / 2.) * dt
 }
 
 pub fn get_dv(previous_acc: DVec3, acc: DVec3, dt: f64) -> DVec3 {
+    info!("getting dv");
     (previous_acc + acc) * dt / 2.
 }
 
