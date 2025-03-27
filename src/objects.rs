@@ -12,7 +12,7 @@ pub mod prelude {
         BodiesMapping, BodyID, BodyInfo, PrimaryBody,
     };
     pub use super::id::id_from;
-    pub use super::ships::{ShipEvent, ShipID, ShipInfo, ShipsMapping};
+    pub use super::ships::{CreateShipMsg, ShipEvent, ShipID, ShipInfo, ShipsMapping};
 }
 
 #[derive(SystemSet, Debug, Clone, Copy, Hash, PartialEq, Eq)]

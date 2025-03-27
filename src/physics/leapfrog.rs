@@ -1,6 +1,8 @@
 use bevy::{math::DVec3, prelude::*};
+use serde::{Deserialize, Serialize};
 
 use super::{
+    super::prelude::ClientMode,
     prelude::*,
     time::{SimStepSize, GAMETIME_PER_SIMTICK},
     G,
@@ -15,7 +17,7 @@ pub fn plugin(app: &mut App) {
         FixedUpdate,
         LeapfrogUpdate
             .run_if(resource_equals(ToggleTime(true)))
-            .run_if(in_state(InGame)),
+            .run_if(in_state(InGame).or_else(in_state(ClientMode::Server))),
     );
     info!("adding systems FixedUpdate :  (update_position, update_acceleration, update_velocity).chain().in_set(LeapfrogUpdate),");
     app.add_systems(
@@ -29,7 +31,7 @@ pub fn plugin(app: &mut App) {
 #[derive(SystemSet, Debug, PartialEq, Eq, Hash, Clone)]
 pub struct LeapfrogUpdate;
 
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, Serialize, Deserialize)]
 pub struct Acceleration {
     pub current: DVec3,
     pub previous: DVec3,
@@ -100,12 +102,12 @@ pub fn get_acceleration(
 }
 
 pub fn get_dx(speed: DVec3, acc: DVec3, dt: f64) -> DVec3 {
-    info!("getting dx");
+    debug!("getting dx");
     (speed + acc * dt / 2.) * dt
 }
 
 pub fn get_dv(previous_acc: DVec3, acc: DVec3, dt: f64) -> DVec3 {
-    info!("getting dv");
+    debug!("getting dv");
     (previous_acc + acc) * dt / 2.
 }
 
@@ -128,7 +130,7 @@ mod tests {
         let mapping = &world.resource::<BodiesMapping>().0;
         let earth = mapping[&id_from("terre")];
         let (&mass, &spawn_earth_pos, &spawn_earth_speed) = world
-            .query::<(&Mass, &Position, &Velocity)>()
+            .query::<(&Mass, &mut Position, &Velocity)>()
             .get(world, earth)
             .unwrap();
         let (spawn_pos, spawn_speed) =
@@ -150,10 +152,10 @@ mod tests {
         }
         let world = app.world_mut();
         let pos = world
-            .query_filtered::<&Position, With<Influenced>>()
+            .query_filtered::<&mut Position, With<Influenced>>()
             .single(world)
             .0;
-        let &earth_pos = world.query::<&Position>().get(world, earth).unwrap();
+        let &earth_pos = world.query::<&mut Position>().get(world, earth).unwrap();
         // dbg!(spawn_pos - spawn_earth_pos.0);
         // dbg!(pos - earth_pos.0);
         assert!(((spawn_pos - spawn_earth_pos.0) - (pos - earth_pos.0)).length() < 2e4);

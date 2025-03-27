@@ -2,9 +2,10 @@ use bevy::{math::DVec3, prelude::*};
 use influence::InfluenceUpdate;
 use leapfrog::LeapfrogUpdate;
 use orbit::OrbitsUpdate;
+use serde::{Deserialize, Serialize};
 use time::{TimeUpdate, ToggleTime};
 
-use crate::objects::ships::trajectory::TrajectoryUpdate;
+use crate::{objects::ships::trajectory::TrajectoryUpdate, server::CommandSet};
 
 pub mod influence;
 pub mod leapfrog;
@@ -28,10 +29,10 @@ pub(crate) mod prelude {
     };
 }
 
-#[derive(Component, Default, Debug, Clone, Copy)]
+#[derive(Component, Default, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Position(pub DVec3);
 
-#[derive(Component, Debug, Default, Clone, Copy)]
+#[derive(Component, Debug, Default, Clone, Copy, Serialize, Deserialize)]
 pub struct Velocity(pub DVec3);
 
 #[derive(Component, Clone, Copy)]
@@ -58,6 +59,7 @@ impl Plugin for PhysicsPlugin {
                 InfluenceUpdate,
                 TrajectoryUpdate,
                 LeapfrogUpdate,
+                CommandSet,
             )
                 .chain()
                 .in_set(PhysicsUpdate)

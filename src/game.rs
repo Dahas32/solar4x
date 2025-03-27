@@ -7,7 +7,6 @@ use std::{
 
 use tempfile::{tempdir, TempDir};
 
-use crate::ui::widget::info;
 use crate::{
     client::ClientMode,
     objects::{
@@ -57,7 +56,7 @@ impl Plugin for GamePlugin {
         } else {
             app.add_plugins(DefaultPlugins.set(LogPlugin {
                 level: bevy::log::Level::DEBUG,
-                filter: "debug,wgpu_core=warn,wgpu_hal=warn,mygame=debug".into(),
+                filter: "debug,wgpu_core=warn,wgpu_hal=warn".into(),
                 ..Default::default()
             }));
         }
@@ -194,7 +193,7 @@ impl ComputedStates for Authoritative {
     type SourceStates = Option<ClientMode>;
 
     fn compute(sources: Self::SourceStates) -> Option<Self> {
-        info!("compiting state : Authoritative");
+        info!("computing state : Authoritative");
         match sources {
             Some(ClientMode::Singleplayer) | None => Some(Self),
             _ => None,

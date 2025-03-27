@@ -108,7 +108,6 @@ fn handle_time_events(
     mut time: ResMut<Time<Virtual>>,
     mut step_size: ResMut<SimStepSize>,
 ) {
-    debug!("handle_time_events");
     use TimeEvent::*;
     for event in reader.read() {
         match event {

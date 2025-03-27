@@ -1,4 +1,5 @@
 use bevy::{math::DVec3, prelude::*};
+use serde::{Deserialize, Serialize};
 
 use crate::game::Loaded;
 use crate::objects::prelude::*;
@@ -30,7 +31,7 @@ pub struct InfluenceUpdate;
 pub struct HillRadius(pub f64);
 
 /// Component storing the bodies that influence the object's trajectory
-#[derive(Component, Default, Debug)]
+#[derive(Component, Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Influenced {
     pub main_influencer: Option<Entity>,
     pub influencers: Vec<Entity>,
@@ -118,7 +119,7 @@ fn update_influence(
     influenced
         .par_iter_mut()
         .for_each(|(object_pos, mut influence)| {
-            *influence = Influenced::new(object_pos, &bodies, mapping.as_ref(), main_body);
+            *influence = Influenced::new(&object_pos, &bodies, mapping.as_ref(), main_body);
         });
 }
 
